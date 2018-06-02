@@ -56,41 +56,41 @@ startup = sys.argv[3]
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((addr, port))
 
-while true:
-  comando = input()
+while True:
+    comando = input()
   
-  if (comando == "add"):
-    #criar uma funcao pra add, talvez
-    destination = input()
-    weight = input()
-    json_string = {} 	
-    json_string = """{
-      "type":"add",
-      "source":"addr",
-      "destination": destination
-    }"""
-    #acho que nem precisa criar pro adds 
-    #depois vai dar um json.dumps(json_string)
-    #https://realpython.com/python-json/
-  	print("add")
+    if (comando == "add"):
+        #criar uma funcao pra add, talvez
+        destination = input()
+        weight = input()
+        json_string = {} 	
+        json_string = """{
+        "type":"add",
+        "source":"addr",
+        "destination": destination
+        }"""
+        #acho que nem precisa criar pro adds 
+        #depois vai dar um json.dumps(json_string)
+        #https://realpython.com/python-json/
+  	    print("add")
     
-  if (comando == "del"):
-    #criar uma funcao pra del
-  	print("del")
+    if (comando == "del"):
+        #criar uma funcao pra del
+  	    print("del")
   
-  if(comando == "trace"):
-    #criar funcao pra calcular trace
-    print("trace")
+    if(comando == "trace"):
+        #criar funcao pra calcular trace
+        print("trace")
     
 	#só termina com Ctrl + c 
-	else: 
-  	sys.exit() 
+    else: 
+  	    sys.exit() 
     
     
   #deve mandar um update toda hora, nao sei se eu entendi
   #A CADA PI(constante durante a execução do roteador - PERIOD) SEGUNDOS ELE DEVE MANDAR MSG DE UPDATE. 
   #ai depois tem que ter um delay e volta a receber comandos
-  time.sleep(period)#delay
+    time.sleep(period)#delay
 
 
 
