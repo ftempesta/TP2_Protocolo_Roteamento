@@ -43,6 +43,25 @@ import socket
 import json
 import time
 
+def adcionaRoteador(vizinhos, comando, roteadores):
+    ip = comando[1]
+    peso = comando[2]
+  
+  #Um add pode ser de um roteador já existente, a gente tem que verificar pra mudar o peso dele
+  #for i in range(len(roteadores)):
+  #  if(roteadores[i][0] == ip)
+  
+  #se nao for um roteador existente na lista
+    roteadores.append([ip, peso])
+    print(roteadores)
+  
+  
+# def deletaRoteador(vizinhos, comando):
+#   ip = comando[1]
+#   for i in range(len(vizinhos)):
+#     if(vizinhos[i][0] == ip)
+#         vizinhos.delete(vizinhos[i])
+
 #/router.py <ADDR> <PERIOD> [STARTUP]
 # <PERIOD>: tempo para fazer o update
 
@@ -52,39 +71,33 @@ period = sys.argv[2]
 # ESSE CAMPO É OPCIONAL
 startup = sys.argv[3]
 
+#Listas
+roteadores = []
+vizinhos = []
+
 #isso daqui vai bindar o roteador com o IP referente a ele,  criado pelo script lá
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((addr, port))
 
 while True:
     comando = input()
-  
-    if (comando == "add"):
-        #criar uma funcao pra add, talvez
-        destination = input()
-        weight = input()
-        json_string = {} 	
-        json_string = """{
-        "type":"add",
-        "source":"addr",
-        "destination": destination
-        }"""
-        #acho que nem precisa criar pro adds 
-        #depois vai dar um json.dumps(json_string)
-        #https://realpython.com/python-json/
-  	    print("add")
+    comando = comando.split(' ')
+
+    if (comando[0] == "add"):
+        adcionaRoteador(vizinhos, comando, roteadores)
+        print("add")
     
-    if (comando == "del"):
-        #criar uma funcao pra del
-  	    print("del")
+    if (comando[0] == "del"):
+        deletaRoteador(vizinhos, comando)
+        print("del")
   
-    if(comando == "trace"):
+    if(comando[0] == "trace"):
         #criar funcao pra calcular trace
         print("trace")
     
-	#só termina com Ctrl + c 
+    #só termina com Ctrl + c 
     else: 
-  	    sys.exit() 
+        sys.exit() 
     
     
   #deve mandar um update toda hora, nao sei se eu entendi
@@ -99,34 +112,34 @@ while True:
 # //SABER SE PRECISAREMOS LIDAR COM ISSO 
 # tem, isso daqui vai fazer nosso codigo fazer as conexões depois . 
 # CRIAR ENDEREÇO IP 
-#		---ip addr add <ip>/<prefixlen> dev <interface>---
-#		---exemplo: ip addr add 127.0.1.1/32 dev lo---
-#		---exemplo: ip addr add 127.0.1.2/32 dev lo---
-#		***o endereço ip deve conter o prefixo identificando a rede à qual a interface está conectada ***
-#		
-#		//NÃO ENTENDI DIREITO COMO USAR O SCRIPT "LO-ADDRESSES.SH"
+#       ---ip addr add <ip>/<prefixlen> dev <interface>---
+#       ---exemplo: ip addr add 127.0.1.1/32 dev lo---
+#       ---exemplo: ip addr add 127.0.1.2/32 dev lo---
+#       ***o endereço ip deve conter o prefixo identificando a rede à qual a interface está conectada ***
+#       
+#       //NÃO ENTENDI DIREITO COMO USAR O SCRIPT "LO-ADDRESSES.SH"
 #
 #
 #
 # -------------------- PRIMEIRA COISA DE CODIGO A SE FAZER: criar a tabela ADD para todos os roteadores, com o nome de destino e o peso--------------------
 
-#	CRIAR TOPOLOGIA
-# 	1. ADICIONAR ENLACE
-#			---add <ip> <peso>---
-#			---exemplo: para o endereço 127.0.1.5:---
-#			---add 127.0.1.1 10---
-#			***adicionar um enlace entre o roteador corrente e o roteador passado por parametro***
+#   CRIAR TOPOLOGIA
+#   1. ADICIONAR ENLACE
+#           ---add <ip> <peso>---
+#           ---exemplo: para o endereço 127.0.1.5:---
+#           ---add 127.0.1.1 10---
+#           ***adicionar um enlace entre o roteador corrente e o roteador passado por parametro***
 
-#			Para cada um dos endereços
-# 			Enquanto ainda tiver endereços para serem lidos
-#					Le endereço pelo comando add, endereço e peso
-#					cria uma tabela de roteamento para esse endereço
+#           Para cada um dos endereços
+#           Enquanto ainda tiver endereços para serem lidos
+#                   Le endereço pelo comando add, endereço e peso
+#                   cria uma tabela de roteamento para esse endereço
 
 
 # -------------------nao sei aonde que a gente vai usar isso, vou ver n os exemplos ---------------------------------
-# 	2. DELETAR ENLACE
-#			***Comando DEL <ip>: remove o enlace entre o roteador corrente e o roteador passado por parametro***
-#		
+#   2. DELETAR ENLACE
+#           ***Comando DEL <ip>: remove o enlace entre o roteador corrente e o roteador passado por parametro***
+#       
 
 #---------------------Depois de todo mundo já ter a tabela, criar um JSON object, ou seja, uma struct com os seguintes campos:
 #source—Especifica o endereço IP do programa que originou a mensagem.
@@ -154,24 +167,24 @@ while True:
 #--------------------Mensagem: TRACE --------------------------------------
 #medir a rota utilizada entre dois roteadores 
 #campos:
-#			type
-#			source
-#			destination
-#			"hops": armazena lista de roteadores por onde a msg de trace já passou
+#           type
+#           source
+#           destination
+#           "hops": armazena lista de roteadores por onde a msg de trace já passou
 
 #quando receber essa mensagem de trace, roteador deve add seu ip ao final da lista no campo "hop" da mensagem. 
 #se roteador FOR o destino do trace
-#		enviar msg "data" para roteador que originou o "trace" - "payload" = string com json correspondente à msg de trace 
+#       enviar msg "data" para roteador que originou o "trace" - "payload" = string com json correspondente à msg de trace 
 #senão
-#		encaminhar a msg por um dos caminhos mair curtos que conhece até o destino
-#		**MSG DE TRACE ESTÃO SUJEITAS A BALANCEAMENTO DE CARGA (DIVIDIR CARGA EM CASO DE EMPATE DE CAMINHO MAIS CURTO)
+#       encaminhar a msg por um dos caminhos mair curtos que conhece até o destino
+#       **MSG DE TRACE ESTÃO SUJEITAS A BALANCEAMENTO DE CARGA (DIVIDIR CARGA EM CASO DE EMPATE DE CAMINHO MAIS CURTO)
 #
 # --trace <ip>: roteador cria uma msg de rastreamento para o roteador com endereço <ip>
 
 #******CALCULAR A ROTA MAIS CURTA*********
 # o roteador deve armazenar informações sobre TODAS as rotas conhecidas em uma tabela de roteamento. 
 # calcular rota mais curta - algoritmo de Dijkstra
-# Emcaminhar dados através da rota mais curta 	
+# Emcaminhar dados através da rota mais curta   
 
 
 
