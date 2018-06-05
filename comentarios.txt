@@ -82,6 +82,129 @@ def ratreaRoteador(vizinhos, comando, ipOrigem):
     payload = json.dumps({'type': 'trace', 'source': ipOrigem, 'destination': ipDestino, 'hops': hops})
     criaMensagemData(ipDestino, ipOrigem, payload)
 
+
+a saida é essa aqui 
+trace 127.0.1.2
+{
+  "type": "trace",
+  "source": "127.0.1.1",
+  "destination": "127.0.1.2",
+  "hops": [
+    "127.0.1.1"
+  ]
+}
+{
+  "type": "data",
+  "source": "127.0.1.1",
+  "destination": "127.0.1.2",
+  "payload": "{\"type\": \"trace\", \"source\": \"127.0.1.1\", \"destination\": \"127.0.1.2\", \"hops\": [\"127.0.1.1\"]}"
+}
+
+
+
+então vamos pensar no trace
+se eu receber o comando trace 127.0.1.2 significa que eu quero fazer uma conexão com o 2.
+ Então o que é a primeira coisa que temos que fAZER? 
+ vamos supor que a gente é o 1. então temos que ver se o 2 é um dos vizinhos do 1 certo
+ e depois?
+ se for
+se for a gente cria o json com ele que nem vc fez ali em cima    
+ok, mas se não for, como faremos para descobrir como chegar no 2?
+ah entao, acho que aí entrariam os vizinhos
+pq a gente teria os pesos dos caminhos antes mesmo de começar a mandar as coisas
+mas nao sei como fazer, só achei q fosse uma boa
+eu até estou te entendendo, mas tem alguns detalhes que ainda não fazerm sentido pra mim
+como que vamos saber os vizinhos dos nosso vizinhos se ele estão em tese rodando em outro terminal?
+ah, quando a gente manda o trace a gente pode optar por mandar sempre pro roteador com menor caminhos
+se o 1 tem caminho pro 2 com peso 5 e caminho pro 3 com caminho 10, a gente pode ir pro caminho 2 primeiro pra veraté retornar
+até aí tudo bem, mas o ponto é como que eu já descobri que ah ta Vai ter que tipo ou mandar pros dois e depois ver ate onde isso leva
+ e meio que aprende o caminho, não sei
+pode ser, vai funcionar como broadcast
+pelo que o Futini tinha me falado ontem seria assim
+Eu só ainda não estou sacando como a gente faz pra mandar msg pra todo mundo, mas vamos indo que a gente parende
+manda pra toda a lista de roteadores q a gente tem pelo add, forzão. ok eu só não sei o comando send pra udṕ, mas só procirar
+mesma coisa, acho que é só send
+o inicio q é diferente
+
+então se o comando for trace, monta o json e manda pra todos os vizinho. certo? será que a gente deveria trocar o nome da lista de roteadores para 
+vizinhos?
+acho que nao PRECISA
+só nao to certo desse negocio de broadcast
+vou ver aqui
+
+Eu acho que faz sentido sim, porque quando sua msg chegar ao destino final, ele vai te responder com uma msg data e lá vai conter em
+ payload o json
+trace, ou seja, o caminho que foi aprendido para chegar até o destino
+
+se bem que estou na duvida agora. Acabei de ler que se o roteador NÃO for o destino, ele encaminha 
+a msg atraves dos caminhos mais curtos e add seu endereço no campo hops
+o que em tese era para fazer com que, no inicio, ele encaminhasse só para os vizinhos com caminho mais curtos
+entao, aí nao é broadcast
+pois é, eu to na duvida sobr ISSO
+queria saber se: e se nao chegasse, uai, aí acho que se der um tempo e ninguem responder ele vai entender que não existe mais 
+esse roteador
+nao sei um exemplo agora
+mas tipo
+e se ele pegar o caminho menor e no final esse caminho nao era o mlehor
+e era melhor ter pego um mais caro aqui pq o resto todo ia ser barato
+pois é. Eu tambem tenho essa duvida
+mas e tao complicado perguntar pro povo que ta fazendo a materia, pq pode ser que eles 
+entenderam errado e estão achando que estão fazendo certo
+
+
+
+
+
+faz esse exemplo aqui ó:
+    A1, A2, A3
+  /           \
+A              C
+
+  \          /
+    B1,B2,B3
+
+, mas aqui tem quer ser algo maior que 1, não? nao pq pra ir pro b1 é 50 ah é . 
+olhei a linha de baixo e vc quer ir de onde para onde?
+A pro C
+
+rota = A - A1 - A2 - A3 - C = 1 + 50 + 30 + 100 = 181
+     = A - B1 - B1 - B3 - C = 50 +1 + 2 + 1 = 54
+
+     só tem essas duas opções de rota, mas tipo, acho que não necessariamente a rota que vc vai pegar é a menor de todas. é?
+    o trace garante que seja a menor rota possivel entre os roteadores
+    uai, então não sei como modelar isso. Pq meio que vc tem que fazer o caminho todo para poder descobrir qual é a menor
+    entao, se a gente tivesse já ao adcionar os roteadores os pesos e os caminhos menores já dava pra saber
+    tem que pensar como faz isso
+    nossa, eu confesso que não estou tendo ideia NÃO
+    kkkkkkkkkkk
+    sim
+    to olhando uns video aqui no youtube, uns links pra ver se tem alguma ideia
+    e depois que a gente matar essa charada, acho que vai ficar bem mais facil tudo. Vai ser implementar, ne 
+
+    Eu achei um video que ajudou um pouco, mas estou com muito sono, 
+    então por mais que eu tenha entendido não vou conseguir implementar agora não
+
+    tudo bem, vou ver se eu escrevo algo ainda hj
+    mas vamo ter q perguntar como q vai funcionar isso
+    qualquer coisa deixa as duvidas anotadas que eu vou pra ufmg depois do almoço e já procuro os monitores
+
+    copia o código aí pq eu não sei se vai ficar atualizado pra vc quando eu sair
+    commita ele
+    sem os comentarios
+
+A pra A1: peso 1
+A1 pra A2: peso 50
+A2 pra A3: peso 30
+A3 pra C: peso 100
+
+A pra b1: peso 50
+B1 pra B2: peso 1
+B2 pra B3: peso 2
+B3 pra C: peso 1
+
+
+
+
 #/router.py <ADDR> <PERIOD> [STARTUP]
 # <PERIOD>: tempo para fazer o update
 
