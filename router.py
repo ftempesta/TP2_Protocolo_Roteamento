@@ -5,6 +5,7 @@ import json
 import time
 import threading as th
 from random import *
+import argparse
 
 #--------------------Input usuario--------------------
 
@@ -15,26 +16,13 @@ def adicionaVizinho(vizinhos, comando, roteadores):
     peso = int(comando[2])
     tamLista = range(len(vizinhos))
     for i in tamLista:
-        # print(vizinhos[i])
         if(vizinhos[i][0] == endereco):
             if(vizinhos[i][1] > peso):
                 vizinhos[i][1] = peso
             return
     vizinhos.append([endereco, peso, time.time()])
-    #salto é o proprio endereço em roteadores
+    #para vizinhos, salto é o proprio endereço
     roteadores.append([endereco, peso, endereco, time.time()])
-    # print('roteadores', roteadores)
-    # tamLista = range(len(roteadores))
-    # for i in tamLista:
-    #     print(roteadores[i])
-    #     if(roteadores[i][0] == endereco):
-    #         if(roteadores[i][1] > peso):
-    #             roteadores[i][1] = peso
-    #             # roteadores[i][2].append([endereco])
-    #         if(roteadores[i][1] == peso):
-    #             roteadores[i][2].append([endereco])
-    #         return
-    # roteadores.append([endereco, peso, [endereco]])
     
 #comando del <ip>
 def deletaRoteador(vizinhos, comando):
@@ -50,24 +38,18 @@ def leInput(vizinhos, roteadores, addr, conn_udp):
 
         if (comando[0] == "add"):
             adicionaVizinho(vizinhos, comando, roteadores)
-            # print('vizinho adicionado', vizinhos)
-            # print(roteadores)
             continue
         
         if (comando[0] == "del"):
             deletaRoteador(vizinhos, comando)
-            print('vizinho deletado. Estado da tabela: ')
-            print(vizinhos)
             continue
       
         if(comando[0] == "trace"):
-            #criar funcao pra calcular trace
             ipDestino = comando[1]
             pacote = {'type': 'trace', 'source': addr, 'destination': ipDestino, 'hops': [addr]}
             print(pacote)
             if(pacote['source'] == pacote['destination']):# # #  é seu próprio endereço
                 print('Destino é seu próprio endereço')
-                # # print(pacote)
                 continue
              
             procuraCaminho(pacote, ipDestino, roteadores, vizinhos)
@@ -78,31 +60,8 @@ def leInput(vizinhos, roteadores, addr, conn_udp):
 
 
 #-------------------Trace--------------------------
-
-
-
 #comando trace <ip>
 def procuraCaminho(pacote, ipDestino, roteadores, vizinhos):
-    # tamLista = range(len(vizinhos))
-    # for i in tamLista:
-    #     if(vizinhos[i][0] == ipDestino):
-    #         print('existe endereco na tabela vizinhos')
-    #         print(vizinhos[i][0])# # 
-    #         print('pacote', pacote)
-    #         enviaPacote(ipDestino, pacote)
-    #         break 
-    #     else:
-    #         tamLista = range(len(roteadores))
-    #         rotas = []
-    #         for i in tamLista:
-    #             if(roteadores[i][0] == ipDestino):
-    #                 rotas.append(roteadores[i])
-    #                 print('existe endereco na tabela roteadores,', roteadores[i][0])
-    #                 enviaPacote(ipDestino, pacote)
-    #                 break
-    #             else:
-    #                 print('não existe endereco na tabela de roteamento')
-    # # valormin = min(vetor)
     tamLista = range(len(roteadores))
     rotas = []
     presente = False
@@ -112,7 +71,6 @@ def procuraCaminho(pacote, ipDestino, roteadores, vizinhos):
             presente = True
     if(presente == False):
         print('não existe endereco na tabela de roteamento')
-            # print('existe endereco na tabela roteadores,', roteadores[i][0])
     menorPeso = 10000
     rotasMenoresPesos = []
     for rota in rotas:
@@ -125,19 +83,12 @@ def procuraCaminho(pacote, ipDestino, roteadores, vizinhos):
     if(len(rotasMenoresPesos) >= 2):
         random = randint(0, len(rotasMenoresPesos)-1)
         print('random', random)
-        # menorRota = min(rotas[1])
         print('menores roteas', rotasMenoresPesos)
         print('destino trace', rotasMenoresPesos[random[0]])
         enviaPacote(rotasMenoresPesos[random[0]], pacote)
  
-#  add 127.0.1.
-#  trace 127.0.1.2
-#------------------Update--------------------------  
-#A CADA PI(constante durante a execução do roteador - PERIOD) SEGUNDOS ELE DEVE MANDAR MSG DE UPDATE. 
-#ai depois tem que ter um delay e volta a receber comandos
-# time.sleep(period)#delay
 
-#Mensagem: UPDATE
+#------------------Update-------------------------- 
 
 def excluiRotasInativas(vizinhos, roteadores, period):
      #limpar rotas de Vizinhos que expiraram
@@ -149,7 +100,7 @@ def excluiRotasInativas(vizinhos, roteadores, period):
             if (r[3]+4*period < time.time()):
                 roteadores.remove(r)
 
-#esse daqui manda um "distances" e vai atualizar o peso, mas aparentemente a gente tem que cuidar de "Atualizações periodicas" e "Split Horizon"
+#esse daqui manda um "distances" e vai atualizar o peso
 def update(vizinhos, roteadores, addr, period):
     while True:
         excluiRotasInativas(vizinhos, roteadores, period)
@@ -180,20 +131,16 @@ def update(vizinhos, roteadores, addr, period):
 def recebePacote(udp, pacotesRecebidos): 
     while True:
         msg, ip = udp.recvfrom(1024)
-        # print("Recebendo pacote")
         if(msg != ""):
             msg = bytes.decode(msg)
             mensagem = json.loads(msg)
             pacotesRecebidos.append(mensagem)
 
-
-    #****MANDA MENSAGEM******
 def enviaPacote(ip_destino, pacote):
     # Manda sua tabela para os vizinhos
     print('pacote', pacote)
     msg = json.dumps(pacote)
     mensagem = bytes(msg, 'utf-8')
-    # print('mensagem', mensagem)
     destino = (ip_destino, port)
     conn_udp.sendto(mensagem, destino)
 
@@ -201,21 +148,15 @@ def enviaPacote(ip_destino, pacote):
 #--------------------Main--------------------
 
 def pacoteUpdateRecebido(pacote, addr, vizinhos, roteadores):
-    # print("teste")
     #limpa lista de roteadores e vizinhos pra ver se expirou
     excluiRotasInativas(vizinhos, roteadores, period)
 
     #pega as distancias e endereço dos pacote recebidos
     distances = pacote['distances']
     if len(distances) == 0:
-        # print('distances', distances)
         for ip, peso in distances.items():
             ipRecebido.append([ip, peso])
-        
-    # TODO INSERIR NOVAS ROTAS DE ACORDO COM OS UPDATES RECEBIDOS
-
-    #vai pegar o IP desses "distances"
-    #  
+          
     #adiciona os pesos que a gente tem com os ips que a gente recebeu
         for ip in ipRecebido:
             for v in vizinhos:
@@ -260,38 +201,54 @@ def trataPacotesRecebidos(roteadores, vizinhos, pacotesRecebidos, addr, period):
                 
             pacotesRecebidos.remove(pacotesRecebidos[0])
 
-        #verifica se o tamanho dA LISTA PACOTE, for
-
 def arquivo_startup(startup, vizinhos, roteadores):
     file = open(startup, "r")
     while True:
-        comandos = file.readline()
-        if(comandos!= ""):
-            comandos = comandos.split
-            if(comandos[0] == "add"):
-                adicionaVizinho(vizinhos, comando, roteadores)
-            if(comandos[0] == "del"):
-                deletaRoteador(vizinhos, comando)
+        for linha in file:
+            comando = linha.split()
+            print('comando', comando)
+            if(comando!= ""):
+                c = []
+                d = []
+                if(comando[0] == "add"):
+                    c.append(comando[0])
+                    c.append(comando[1])
+                    c.append(comando[2])
+                    print('c', c)
+                    adicionaVizinho(vizinhos, c, roteadores)
+                if(comando[0] == "del"):
+                    d.append(comando[0])
+                    d.append(comando[1])
+                    print('d', d)
+                    deletaRoteador(vizinhos, d)
+    file.close()
     return
 
-
-#/router.py <ADDR> <PERIOD> [STARTUP]
-# <PERIOD>: tempo para fazer o update
-
+#-------------------INICIO--------------------------
 port = 55151
-addr = sys.argv[1]
-period = int(sys.argv[2])
-# ESSE CAMPO É OPCIONAL
-startup = sys.argv[3]
-
-if(startup != ""):
-    arquivo_startup(startup, vizinhos, roteadores)
 
 #Listas
 roteadores = []
 vizinhos = []
 pacotesRecebidos = []
 
+parser = argparse.ArgumentParser()
+parser.add_argument("addr")
+parser.add_argument("period")
+
+parser.add_argument("--addr")
+parser.add_argument("--update-period")
+
+parser.add_argument("--startup-commands")
+
+args = parser.parse_args()
+addr = args.addr
+period = int(args.period)
+
+if (args.startup_commands):
+    startup = args.startup_commands
+    print(startup)
+    arquivo_startup(startup, vizinhos, roteadores)
 
 #isso daqui vai bindar o roteador com o IP referente a ele,  criado pelo script lá
 conn_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -300,11 +257,9 @@ conn_udp.bind(origem)
 
 #thread1
 threadRecieve = th.Thread(target = recebePacote, args = (conn_udp, pacotesRecebidos))
-#recebePacote(pacote)
 
 #thread2
 threadInput = th.Thread(target = leInput, args = (vizinhos, roteadores, addr, conn_udp))
-#leInput(vizinhos, roteadores, conn_udp),
 
 #thread3
 threadPacotes = th.Thread(target = trataPacotesRecebidos, args = (roteadores, vizinhos, pacotesRecebidos, addr, period))
